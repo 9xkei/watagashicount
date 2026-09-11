@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>綿菓子カウンター</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #4a4a4a;
+        }
+        .card {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 320px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ff6b81;
+        }
+        .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+        .counter-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button.btn-count {
+            background-color: #ff6b81;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button.btn-count:hover {
+            background-color: #ff4757;
+        }
+        button.btn-count:active {
+            transform: scale(0.95);
+        }
+        input[type="number"] {
+            width: 80px;
+            height: 45px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus {
+            border-color: #ff6b81;
+        }
+        /* スピンボタン（上下の矢印）を非表示にする（すっきりさせるため） */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .reset-btn {
+            background-color: transparent;
+            border: 1px solid #ccc;
+            color: #888;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .reset-btn:hover {
+            background-color: #f1f1f1;
+            color: #555;
+        }
+        .save-status {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 15px;
+            height: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="icon">🍬</div>
+        <h1>綿菓子カウンター</h1>
+        
+        <div class="counter-container">
+            <button class="btn-count" onclick="updateCount(-1)">-</button>
+            <input type="number" id="countInput" value="0" min="0" oninput="handleDirectInput()">
+            <button class="btn-count" onclick="updateCount(1)">+</button>
+        </div>
+
+        <button class="reset-btn" onclick="resetCount()">リセット (0個に)</button>
+        
+        <div id="saveStatus" class="save-status"></div>
+    </div>
+
+    <script>
+        const COOKIE_NAME = 'cotton_candy_count';
+        const COOKIE_DAYS = 365; // クッキーの保存日数
+
+        // クッキーに値を保存する関数
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+            showSaveStatus();
+        }
+
+        // クッキーから値を取得する関数
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        // 「保存しました」という一時的なテキストを表示する演出
+        function showSaveStatus() {
+            const status = document.getElementById('saveStatus');
+            status.textContent = "自動保存しました";
+            setTimeout(() => {
+                status.textContent = "";
+            }, 1500);
+        }
+
+        // 初期読み込み時の処理
+        window.onload = function() {
+            const savedCount = getCookie(COOKIE_NAME);
+            if (savedCount !== null) {
+                document.getElementById('countInput').value = Math.max(0, parseInt(savedCount, 10) || 0);
+            }
+        };
+
+        // プラス・マイナスボタンを押したときの処理
+        function updateCount(amount) {
+            const input = document.getElementById('countInput');
+            let current = parseInt(input.value, 10) || 0;
+            current += amount;
+            if (current < 0) current = 0; // 0未満にはならないようにする
+            
+            input.value = current;
+            setCookie(COOKIE_NAME, current, COOKIE_DAYS);
+        }
+
+        // 数値を直接入力したときの処理
+        function handleDirectInput() {
+            const input = document.getElementById('countInput');
+            let current = parseInt(input.value, 10);
+            
+            if (isNaN(current) || current < 0) {
+                // 空欄やマイナスが入力された場合のフォールバック
+                current = 0;
+            }
+            
+            setCookie(COOKIE_NAME, current, COOKIE_DAYS);
+        }
+
+        // リセットボタンの処理
+        function resetCount() {
+            if (confirm('個数を0にリセットしますか？')) {
+                const input = document.getElementById('countInput');
+                input.value = 0;
+                setCookie(COOKIE_NAME, 0, COOKIE_DAYS);
+            }
+        }
+    </script>
+
+</body>
+</html>
