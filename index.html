@@ -18,7 +18,7 @@
         }
 
         /* 画面全体のダブルタップズームを無効化 */
-        html, body {
+        *, *::before, *::after {
             touch-action: manipulation;
         }
 
@@ -33,7 +33,7 @@
             align-items: center;
             height: 100vh;
             user-select: none;
-            -webkit-user-select: none; /* iOSでのテキスト選択防止 */
+            -webkit-user-select: none;
         }
 
         .container {
@@ -78,8 +78,6 @@
             transition: background-color 0.2s ease;
             color: var(--md-sys-color-on-surface-variant);
             -webkit-tap-highlight-color: transparent;
-            /* ボタン個別のタップズーム抑制 */
-            touch-action: manipulation;
         }
 
         .icon-btn:hover {
@@ -94,7 +92,7 @@
             width: 50%;
             height: 50%;
             fill: currentColor;
-            pointer-events: none; /* SVGへのタップイベント干渉を防止 */
+            pointer-events: none;
         }
 
         .input-wrapper {
@@ -115,7 +113,6 @@
             outline: none;
             transition: border-color 0.2s ease;
             font-family: inherit;
-            touch-action: manipulation;
         }
 
         .count-input:focus {
@@ -140,7 +137,6 @@
             transition: background-color 0.2s ease;
             font-family: inherit;
             -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
         }
 
         .text-btn:hover {
@@ -206,22 +202,10 @@
         const STORAGE_KEY = 'cotton_candy_count';
         let snackbarTimeout;
 
-        // iOS / iPadOS 特有のダブルタップやピンチズーム動作を JavaScript で抑制
+        // ピンチイン・ピンチアウトでの拡大のみ抑制
         document.addEventListener('gesturestart', function (e) {
             e.preventDefault();
         });
-
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            const now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                // 入力フィールド以外へのダブルタップによるズームを防止
-                if (event.target.tagName !== 'INPUT') {
-                    event.preventDefault();
-                }
-            }
-            lastTouchEnd = now;
-        }, false);
 
         function setCookie(name, value, days = 365) {
             const date = new Date();
