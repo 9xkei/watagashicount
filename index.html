@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>綿菓子カウンター</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -17,6 +17,11 @@
             --md-sys-color-outline: #747775;
         }
 
+        /* 画面全体のダブルタップズームを無効化 */
+        html, body {
+            touch-action: manipulation;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -28,14 +33,13 @@
             align-items: center;
             height: 100vh;
             user-select: none;
+            -webkit-user-select: none; /* iOSでのテキスト選択防止 */
         }
 
         .container {
             background-color: var(--md-sys-color-surface);
-            /* 画面幅の90%を使用し、PC等の大画面では最大800pxで止める */
             width: 90vw;
             max-width: 800px;
-            /* 画面サイズに合わせて余白を動的に変更 */
             padding: clamp(32px, 8vw, 64px) clamp(24px, 5vw, 48px);
             border-radius: clamp(24px, 4vw, 32px);
             box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
@@ -46,7 +50,6 @@
         }
 
         .title {
-            /* 最小24px、基本は画面幅の5%、最大40pxで可変 */
             font-size: clamp(24px, 5vw, 40px);
             font-weight: 400;
             margin: 0 0 clamp(24px, 6vw, 48px) 0;
@@ -57,7 +60,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* 要素間の隙間も画面に合わせて広げる */
             gap: clamp(16px, 4vw, 40px);
             margin-bottom: clamp(32px, 8vw, 56px);
             width: 100%;
@@ -66,7 +68,6 @@
         .icon-btn {
             background-color: transparent;
             border: none;
-            /* 押しやすいようにボタンを巨大化（最小64px〜最大100px） */
             width: clamp(64px, 15vw, 100px);
             height: clamp(64px, 15vw, 100px);
             border-radius: 50%;
@@ -76,8 +77,9 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
             color: var(--md-sys-color-on-surface-variant);
-            /* タッチデバイスでのハイライトを無効化（独自実装するため） */
             -webkit-tap-highlight-color: transparent;
+            /* ボタン個別のタップズーム抑制 */
+            touch-action: manipulation;
         }
 
         .icon-btn:hover {
@@ -89,10 +91,10 @@
         }
 
         .icon-btn svg {
-            /* アイコンサイズをボタン領域の50%に設定して追従させる */
             width: 50%;
             height: 50%;
             fill: currentColor;
+            pointer-events: none; /* SVGへのタップイベント干渉を防止 */
         }
 
         .input-wrapper {
@@ -101,7 +103,6 @@
         }
 
         .count-input {
-            /* 入力欄と文字を極大化（文字は最大120px） */
             width: clamp(100px, 30vw, 240px);
             font-size: clamp(56px, 20vw, 120px);
             font-weight: 400;
@@ -114,6 +115,7 @@
             outline: none;
             transition: border-color 0.2s ease;
             font-family: inherit;
+            touch-action: manipulation;
         }
 
         .count-input:focus {
@@ -130,7 +132,6 @@
             background: transparent;
             border: none;
             color: var(--md-sys-color-primary);
-            /* リセットボタンも押し間違いがないよう適切な大きさに */
             font-size: clamp(16px, 4vw, 20px);
             font-weight: 500;
             padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px);
@@ -139,6 +140,7 @@
             transition: background-color 0.2s ease;
             font-family: inherit;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .text-btn:hover {
@@ -149,7 +151,6 @@
             background-color: rgba(11, 87, 208, 0.12);
         }
 
-        /* スナックバーのサイズも少し見やすく調整 */
         .snackbar {
             visibility: hidden;
             min-width: clamp(250px, 50vw, 400px);
@@ -204,6 +205,23 @@
     <script>
         const STORAGE_KEY = 'cotton_candy_count';
         let snackbarTimeout;
+
+        // iOS / iPadOS 特有のダブルタップやピンチズーム動作を JavaScript で抑制
+        document.addEventListener('gesturestart', function (e) {
+            e.preventDefault();
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                // 入力フィールド以外へのダブルタップによるズームを防止
+                if (event.target.tagName !== 'INPUT') {
+                    event.preventDefault();
+                }
+            }
+            lastTouchEnd = now;
+        }, false);
 
         function setCookie(name, value, days = 365) {
             const date = new Date();
