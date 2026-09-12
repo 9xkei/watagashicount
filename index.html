@@ -32,20 +32,24 @@
 
         .container {
             background-color: var(--md-sys-color-surface);
-            border-radius: 24px;
-            padding: 32px;
-            width: 100%;
-            max-width: 320px;
+            /* 画面幅の90%を使用し、PC等の大画面では最大800pxで止める */
+            width: 90vw;
+            max-width: 800px;
+            /* 画面サイズに合わせて余白を動的に変更 */
+            padding: clamp(32px, 8vw, 64px) clamp(24px, 5vw, 48px);
+            border-radius: clamp(24px, 4vw, 32px);
             box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-sizing: border-box;
         }
 
         .title {
-            font-size: 22px;
+            /* 最小24px、基本は画面幅の5%、最大40pxで可変 */
+            font-size: clamp(24px, 5vw, 40px);
             font-weight: 400;
-            margin: 0 0 32px 0;
+            margin: 0 0 clamp(24px, 6vw, 48px) 0;
             color: var(--md-sys-color-on-surface);
         }
 
@@ -53,16 +57,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
-            margin-bottom: 32px;
+            /* 要素間の隙間も画面に合わせて広げる */
+            gap: clamp(16px, 4vw, 40px);
+            margin-bottom: clamp(32px, 8vw, 56px);
             width: 100%;
         }
 
         .icon-btn {
             background-color: transparent;
             border: none;
-            width: 48px;
-            height: 48px;
+            /* 押しやすいようにボタンを巨大化（最小64px〜最大100px） */
+            width: clamp(64px, 15vw, 100px);
+            height: clamp(64px, 15vw, 100px);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -70,6 +76,8 @@
             cursor: pointer;
             transition: background-color 0.2s ease;
             color: var(--md-sys-color-on-surface-variant);
+            /* タッチデバイスでのハイライトを無効化（独自実装するため） */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .icon-btn:hover {
@@ -81,8 +89,9 @@
         }
 
         .icon-btn svg {
-            width: 24px;
-            height: 24px;
+            /* アイコンサイズをボタン領域の50%に設定して追従させる */
+            width: 50%;
+            height: 50%;
             fill: currentColor;
         }
 
@@ -92,14 +101,15 @@
         }
 
         .count-input {
-            width: 80px;
-            font-size: 32px;
+            /* 入力欄と文字を極大化（文字は最大120px） */
+            width: clamp(100px, 30vw, 240px);
+            font-size: clamp(56px, 20vw, 120px);
             font-weight: 400;
             text-align: center;
             color: var(--md-sys-color-on-surface);
             background: transparent;
             border: none;
-            border-bottom: 2px solid var(--md-sys-color-outline);
+            border-bottom: clamp(2px, 0.5vw, 4px) solid var(--md-sys-color-outline);
             padding: 4px 0;
             outline: none;
             transition: border-color 0.2s ease;
@@ -120,13 +130,15 @@
             background: transparent;
             border: none;
             color: var(--md-sys-color-primary);
-            font-size: 14px;
+            /* リセットボタンも押し間違いがないよう適切な大きさに */
+            font-size: clamp(16px, 4vw, 20px);
             font-weight: 500;
-            padding: 10px 16px;
-            border-radius: 20px;
+            padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px);
+            border-radius: 30px;
             cursor: pointer;
             transition: background-color 0.2s ease;
             font-family: inherit;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .text-btn:hover {
@@ -137,21 +149,21 @@
             background-color: rgba(11, 87, 208, 0.12);
         }
 
-        /* マテリアルデザインのスナックバー（通知） */
+        /* スナックバーのサイズも少し見やすく調整 */
         .snackbar {
             visibility: hidden;
-            min-width: 288px;
+            min-width: clamp(250px, 50vw, 400px);
             background-color: #313033;
             color: #f4eff4;
-            text-align: left;
-            border-radius: 4px;
-            padding: 14px 16px;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
             position: fixed;
             z-index: 1;
             left: 50%;
             bottom: 24px;
             transform: translateX(-50%);
-            font-size: 14px;
+            font-size: clamp(14px, 3.5vw, 16px);
             font-weight: 400;
             box-shadow: 0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12);
             opacity: 0;
@@ -161,7 +173,7 @@
         .snackbar.show {
             visibility: visible;
             opacity: 1;
-            bottom: 32px;
+            bottom: clamp(32px, 8vw, 48px);
         }
     </style>
 </head>
@@ -193,7 +205,6 @@
         const STORAGE_KEY = 'cotton_candy_count';
         let snackbarTimeout;
 
-        // クッキー処理
         function setCookie(name, value, days = 365) {
             const date = new Date();
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -249,7 +260,6 @@
             saveAndNotify(0, true);
         }
 
-        // 初期化
         document.addEventListener('DOMContentLoaded', () => {
             const saved = getCookie(STORAGE_KEY);
             if (saved !== null) {
